@@ -95,6 +95,31 @@ where
         }
     }
 
+    pub fn resize_input_tensor(&mut self, index: TensorIndex, dims: &[c_int]) -> Result<()> {
+        let interpreter = self.handle_mut();
+
+        let ptr = dims.as_ptr();
+        let len = dims.len() as size_t;
+
+        #[allow(clippy::forget_copy, deprecated)]
+            let r = unsafe {
+            cpp!([
+                interpreter as "Interpreter*",
+                index as "int",
+                ptr as "const int*",
+                len as "size_t"
+            ] -> bool as "bool" {
+                std::vector<int> inputs(ptr, ptr + len);
+                return interpreter->ResizeInputTensorStrict(index, inputs) == kTfLiteOk;
+            })
+        };
+        if r {
+            Ok(())
+        } else {
+            Err(Error::internal_error("failed to resize input tensor"))
+        }
+    }
+
     /// Prints a dump of what tensors and what nodes are in the interpreter.
     pub fn print_state(&self) {
         let interpreter = self.handle();
