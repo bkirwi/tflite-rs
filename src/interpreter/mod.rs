@@ -95,6 +95,22 @@ where
         }
     }
 
+    pub fn reset_variable_tensors(&mut self) -> Result<()> {
+        let interpreter = self.handle_mut();
+
+        #[allow(clippy::forget_copy, deprecated)]
+            let r = unsafe {
+            cpp!([interpreter as "Interpreter*"] -> bool as "bool" {
+                return interpreter->ResetVariableTensors() == kTfLiteOk;
+            })
+        };
+        if r {
+            Ok(())
+        } else {
+            Err(Error::internal_error("failed to reset tensors"))
+        }
+    }
+
     pub fn resize_input_tensor(&mut self, index: TensorIndex, dims: &[c_int]) -> Result<()> {
         let interpreter = self.handle_mut();
 
